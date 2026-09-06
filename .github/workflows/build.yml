@@ -1,0 +1,34 @@
+name: Build MatchBot APK
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download project
+        uses: actions/checkout@v4
+
+      - name: Extract MatchBot project
+        run: |
+          mkdir project
+          unzip -q MatchBot_OnlineBuild.zip -d project
+
+      - name: Find Android project
+        run: |
+          ROOT=$(find project -name "gradlew" -type f | head -n 1 | xargs dirname)
+          echo "ROOT=$ROOT" >> $GITHUB_ENV
+
+      - name: Build APK
+        run: |
+          cd "$ROOT"
+          chmod +x gradlew
+          ./gradlew assembleDebug
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: MatchBot-APK
+          path: "**/build/outputs/apk/debug/*.apk"
