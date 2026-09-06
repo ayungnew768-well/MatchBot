@@ -13,6 +13,7 @@ jobs:
 
       - name: Extract project
         run: |
+          rm -rf project
           unzip -q MatchBot_OnlineBuild.zip -d project
 
       - name: Set up Java
@@ -26,14 +27,30 @@ jobs:
         with:
           gradle-version: '8.7'
 
-      - name: Fix accessibility config
+      - name: Repair Android resources
         run: |
-          sed -i '/android:description=/d' project/MatchBot/app/src/main/res/xml/accessibility_service_config.xml
+          python3 - <<'PY'
+          from pathlib import Path
+
+          p = Path("project/MatchBot/app/src/main/res/xml/accessibility_service_config.xml")
+
+          text = p.read_text(encoding="utf-8")
+
+          lines = []
+          for line in text.splitlines():
+              if "android:description=" not in line:
+                  lines.append(line)
+
+          p.write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+          print("=== accessibility_service_config.xml ===")
+          print(p.read_text(encoding="utf-8"))
+          PY
 
       - name: Build APK
         working-directory: project/MatchBot
         run: |
-          gradle :app:assembleDebug --stacktrace
+          gradle clean :app:assembleDebug --stacktrace
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
