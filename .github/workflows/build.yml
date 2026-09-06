@@ -12,7 +12,8 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Extract project
-        run: unzip -q MatchBot_OnlineBuild.zip -d project
+        run: |
+          unzip -q MatchBot_OnlineBuild.zip -d project
 
       - name: Set up Java
         uses: actions/setup-java@v4
@@ -25,9 +26,14 @@ jobs:
         with:
           gradle-version: '8.7'
 
+      - name: Fix accessibility config
+        run: |
+          sed -i '/android:description=/d' project/MatchBot/app/src/main/res/xml/accessibility_service_config.xml
+
       - name: Build APK
         working-directory: project/MatchBot
-        run: gradle :app:assembleDebug --stacktrace
+        run: |
+          gradle :app:assembleDebug --stacktrace
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
